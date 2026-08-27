@@ -1,0 +1,20 @@
+services:
+  api:
+    build: .
+    # Host networking so the container reaches MLflow at localhost:5000 on
+    # this machine directly, with no host.docker.internal indirection needed
+    # on Linux. Note: with network_mode: host the top-level "ports:" mapping
+    # has no effect — the bind port is set via the command below instead.
+    network_mode: host
+    environment:
+      - MLFLOW_TRACKING_URI=http://localhost:5000
+    # S3/MinIO artifact-store credentials live in .env (gitignored) — see
+    # .env.example for the required keys. Not inlined here to avoid
+    # committing secrets.
+    env_file:
+      - .env
+    # Port 8000 was already occupied on this host at setup time, so the API
+    # is bound to 8002 instead. Change back to 8000 here (and drop this
+    # command override) once 8000 is free, or leave as-is.
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]
+    restart: unless-stopped
